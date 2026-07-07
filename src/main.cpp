@@ -10,15 +10,15 @@ int main() {
     world.register_components<TransformComponent, HealthComponent>();
 
     ecs::Entity player = world.spawn();
-    world.emplace<TransformComponent>(player, 0, 0, 0);
-    world.emplace<HealthComponent>(player, 10);
+    world.emplace_or_get<TransformComponent>(player, 0, 0, 0);
+    world.emplace_or_get<HealthComponent>(player, 10);
 
     ecs::Entity enemy = world.spawn();
-    world.emplace<TransformComponent>(enemy, 1, 2, 5);
-    world.emplace<HealthComponent>(enemy, 30);
+    world.emplace_or_get<TransformComponent>(enemy, 1, 2, 5);
+    world.emplace_or_get<HealthComponent>(enemy, 30);
 
     ecs::Entity brick = world.spawn();
-    world.emplace<TransformComponent>(brick, -2, -2, -2);
+    world.emplace_or_get<TransformComponent>(brick, -2, -2, -2);
 
     world.add_system<systems::MovementSystem>(Vec3{-5, 0, 3});
     world.add_system<systems::DrawingSystem>();

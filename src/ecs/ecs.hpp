@@ -3,11 +3,11 @@
 
 #include "storage.hpp"
 
+#include <memory>
 #include <queue>
 #include <typeindex>
 #include <unordered_map>
 #include <vector>
-#include <memory>
 
 namespace ecs {
 
@@ -77,26 +77,35 @@ class World {
     void register_components() {
         if (component_registry.register_component<T>())
             storages.push_back(impl::ComponentStorage<T>());
-        if (sizeof...(Ts))
+        if constexpr (sizeof...(Ts) > 0)
             register_components<Ts...>();
     }
 
     template <typename T, typename... Args>
-    T &emplace(Entity, Args &&...args) {
-        auto& istorage = storages[component_registry.get_type_id<T>()];
-        auto& storage = static_cast<impl::ComponentStorage<T>&>(istorage);
-        storage.emplace_back(std::forward<Args>(args)...); // TODO: Test if forward matters
+    T &emplace_or_get(Entity entity, Args &&...args) {
+        ComponentTypeID type = component_registry.get_type_id<T>();
+
+        auto &descriptor = entities[entity];
+        auto &istorage = storages[type];
+        auto &storage = static_cast<impl::ComponentStorage<T> &>(istorage);
+        
+        if (descriptor[type]) {
+            ComponentID id = storage.emplace(std::forward<Args>(args)...);
+            descriptor.add_component(type, id);
+        }
+        return storage[descriptor[type]];
     }
 
     Entity spawn();
 
     template <typename T, typename... Args>
     void add_system(Args &&...args) {
-        systems.push_back(std::make_unique(T(args...)));
+        systems.push_back(std::make_unique<T>(std::forward<Args>(args)...));
     }
 
-  private:
+    void update();
 
+  private:
     impl::ComponentRegistry component_registry;
     std::vector<impl::IComponentStorage> storages;
 
