@@ -1,29 +1,27 @@
-#include "ecs/world.hpp"
-#include "systems.hpp"
 #include "components.hpp"
+#include "ecs/ecs.hpp"
+#include "systems.hpp"
 
 using namespace cmps;
 
 int main() {
-    ecs::World world<TransformComponent, HealthComponent>();
+    ecs::World world;
 
+    world.register_components<TransformComponent, HealthComponent>();
 
     ecs::Entity player = world.spawn();
-    world.emplace_component<TransformComponent>(player, 0, 0, 0);
-    world.emplace_component<HealthComponent>(player, 10);
+    world.emplace<TransformComponent>(player, 0, 0, 0);
+    world.emplace<HealthComponent>(player, 10);
 
     ecs::Entity enemy = world.spawn();
-    world.emplace_component<TransformComponent>(enemy, 1, 2, 5);
-    world.emplace_component<HealthComponent>(enemy, 30);
+    world.emplace<TransformComponent>(enemy, 1, 2, 5);
+    world.emplace<HealthComponent>(enemy, 30);
 
     ecs::Entity brick = world.spawn();
-    world.emplace_component<TransformComponent>(brick, -2, -2, -2);
+    world.emplace<TransformComponent>(brick, -2, -2, -2);
 
-
-    systems::MovementSystem movement(-5, 0, 3);
-    systems::DrawingSystem drawing;
-
-    world.add_systems(movement, drawing);
+    world.add_system<systems::MovementSystem>(Vec3{-5, 0, 3});
+    world.add_system<systems::DrawingSystem>();
 
     for (int i = 0; i < 3; i++) {
         world.update();
