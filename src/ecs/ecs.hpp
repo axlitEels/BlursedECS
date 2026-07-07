@@ -120,6 +120,8 @@ class World {
 class System {
   public:
     virtual System &operator()(World &world) = 0;
+
+    virtual ~System() = default;
 };
 
 } // namespace ecs
