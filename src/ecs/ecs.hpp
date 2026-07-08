@@ -87,12 +87,12 @@ class World {
     }
 
     template <typename T, typename... Args>
-    T &emplace_or_get(Entity entity, Args &&...args) {
+    T& emplace_or_get(Entity entity, Args&&... args) {
         impl::ComponentTypeID type = component_registry.get_type_id<T>();
 
-        auto &descriptor = entities[entity];
-        auto &istorage = *storages[type];
-        auto &storage = dynamic_cast<impl::ComponentStorage<T> &>(istorage);
+        auto& descriptor = entities[entity];
+        auto& istorage = *storages[type];
+        auto& storage = dynamic_cast<impl::ComponentStorage<T>&>(istorage);
 
         if (descriptor[type] == impl::NULL_COMPONENT) {
             impl::ComponentID id = storage.emplace(std::forward<Args>(args)...);
@@ -111,7 +111,7 @@ class World {
     Entity spawn();
 
     template <typename T, typename... Args>
-    void add_system(Args &&...args) {
+    void add_system(Args&&... args) {
         systems.push_back(std::make_unique<T>(std::forward<Args>(args)...));
     }
 
@@ -131,7 +131,7 @@ class World {
 
 class System {
   public:
-    virtual void run(World &world) = 0;
+    virtual void run(World& world) = 0;
 
     virtual ~System() = default;
 };
