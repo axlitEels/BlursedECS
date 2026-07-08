@@ -19,6 +19,28 @@ class IComponentStorage {
 template <typename T>
 class ComponentStorage : public IComponentStorage {
   public:
+    class Iterator {
+      public:
+        using difference_type = std::ptrdiff_t;
+        using value_type = T;
+
+        value_type &operator*() const;
+
+        Iterator &operator++();
+        Iterator operator++(int) {
+            auto tmp = *this;
+            ++*this;
+            return tmp;
+        }
+
+        bool operator==(const Iterator &) const;
+      private:
+        std::deque<std::optional<T>>::iterator iter;
+        std::deque<std::optional<T>>::iterator end;
+    };
+
+    static_assert(std::forward_iterator<Iterator>);
+
     template <typename... Args>
     ComponentID emplace(Args &&...args) {
         components.push_back(std::forward<Args>(args)...);
