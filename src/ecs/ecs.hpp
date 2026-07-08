@@ -3,6 +3,7 @@
 
 #include "storage.hpp"
 
+#include <deque>
 #include <memory>
 #include <queue>
 #include <typeindex>
@@ -12,13 +13,11 @@
 namespace ecs {
 
 using Entity = std::size_t;
-using ComponentTypeID = std::size_t;
-using ComponentID = std::size_t;
-
 // const Entity NULL_ENTITY = 0;
-const ComponentID NULL_COMPONENT = 0;
 
 namespace impl {
+
+using ComponentTypeID = std::size_t;
 
 class EntityDescriptor {
   public:
@@ -83,14 +82,14 @@ class World {
 
     template <typename T, typename... Args>
     T &emplace_or_get(Entity entity, Args &&...args) {
-        ComponentTypeID type = component_registry.get_type_id<T>();
+        impl::ComponentTypeID type = component_registry.get_type_id<T>();
 
         auto &descriptor = entities[entity];
         auto &istorage = storages[type];
         auto &storage = static_cast<impl::ComponentStorage<T> &>(istorage);
-        
+
         if (descriptor[type]) {
-            ComponentID id = storage.emplace(std::forward<Args>(args)...);
+            impl::ComponentID id = storage.emplace(std::forward<Args>(args)...);
             descriptor.add_component(type, id);
         }
         return storage[descriptor[type]];
