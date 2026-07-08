@@ -81,7 +81,7 @@ class World {
     template <typename T, typename... Ts>
     void register_components() {
         if (component_registry.register_component<T>())
-            storages.push_back(impl::ComponentStorage<T>());
+            storages.push_back(std::make_unique<impl::ComponentStorage<T>>());
         if constexpr (sizeof...(Ts) > 0)
             register_components<Ts...>();
     }
@@ -91,7 +91,7 @@ class World {
         impl::ComponentTypeID type = component_registry.get_type_id<T>();
 
         auto &descriptor = entities[entity];
-        auto &istorage = storages[type];
+        auto &istorage = *storages[type];
         auto &storage = dynamic_cast<impl::ComponentStorage<T> &>(istorage);
 
         if (descriptor[type] == impl::NULL_COMPONENT) {
@@ -119,7 +119,7 @@ class World {
 
   private:
     impl::ComponentRegistry component_registry;
-    std::vector<impl::IComponentStorage> storages;
+    std::vector<std::unique_ptr<impl::IComponentStorage>> storages;
 
     std::deque<impl::EntityDescriptor> entities;
     // Reserve for NULL_ENTITY

@@ -21,7 +21,7 @@ class ComponentStorage : public IComponentStorage {
   public:
     template <typename... Args>
     ComponentID emplace(Args &&...args) {
-        components.push_back(std::optional<T>(std::forward<Args>(args)...));
+        components.push_back(std::forward<Args>(args)...);
         return components.size() - 1;
     }
 
