@@ -6,6 +6,9 @@
 namespace cmps {
 
 struct TransformComponent {
+    TransformComponent() = default;
+    TransformComponent(Vec3 position) : position(position) {}
+
     Vec3 position{0, 0, 0};
     Vec3 rotation{0, 0, 0};
     Vec3 scale{1, 1, 1};
@@ -22,6 +25,6 @@ struct HealthComponent {
         : health(max_health), max_health(max_health) {}
 };
 
-}  // namespace cmps
+} // namespace cmps
 
 #endif // COMPONENTS_HPP_

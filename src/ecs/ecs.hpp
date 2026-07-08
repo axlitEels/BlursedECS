@@ -31,10 +31,7 @@ class EntityDescriptor {
 
     bool is_valid() const { return components.size(); }
     void clear() { components.clear(); }
-    void resize(ComponentTypeID n) {
-        if (n > components.capacity()) // Does not allow dropping elements
-            components.resize(n, NULL_COMPONENT);
-    }
+    void resize(ComponentTypeID n);
 
   private:
     std::vector<ComponentID> components;
@@ -43,7 +40,15 @@ class EntityDescriptor {
 class ComponentRegistry {
   public:
     template <typename T>
-    bool register_component();
+    bool register_component() {
+        auto type = std::type_index(typeid(T));
+
+        if (registered_components.contains(type))
+            return false;
+
+        registered_components.insert({type, registered_components.size()});
+        return true;
+    }
 
     ComponentTypeID get_type_id(std::type_index index) const {
         return registered_components.at(index);
@@ -59,11 +64,12 @@ class ComponentRegistry {
         get_type_id<T>();
     }
 
-    ComponentTypeID get_type_count() const { return next_id; }
+    ComponentTypeID get_type_count() const {
+        return registered_components.size();
+    }
 
   private:
     std::unordered_map<std::type_index, ComponentTypeID> registered_components;
-    ComponentTypeID next_id = 0;
 };
 
 } // namespace impl
@@ -86,14 +92,21 @@ class World {
 
         auto &descriptor = entities[entity];
         auto &istorage = storages[type];
-        auto &storage = static_cast<impl::ComponentStorage<T> &>(istorage);
+        auto &storage = dynamic_cast<impl::ComponentStorage<T> &>(istorage);
 
-        if (descriptor[type]) {
+        if (descriptor[type] == impl::NULL_COMPONENT) {
             impl::ComponentID id = storage.emplace(std::forward<Args>(args)...);
             descriptor.add_component(type, id);
         }
+
         return storage[descriptor[type]];
     }
+
+    // TODO:
+    // get()
+    // replace()
+    // remove()
+    // iterators()
 
     Entity spawn();
 
@@ -118,7 +131,7 @@ class World {
 
 class System {
   public:
-    virtual System &operator()(World &world) = 0;
+    virtual void run(World &world) = 0;
 
     virtual ~System() = default;
 };

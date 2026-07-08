@@ -9,10 +9,9 @@ namespace systems {
 class MovementSystem : public ecs::System {
   public:
     MovementSystem() = default;
-    MovementSystem(Vec3 vec) : wind_vector(vec) {
-    }
+    MovementSystem(Vec3 vec) : wind_vector(vec) {}
 
-    virtual System &operator()(ecs::World &world) override;
+    virtual void run(ecs::World &world) override;
 
   private:
     Vec3 wind_vector;
@@ -20,9 +19,9 @@ class MovementSystem : public ecs::System {
 
 class DrawingSystem : public ecs::System {
   public:
-    virtual System &operator()(ecs::World &world) override;
+    virtual void run(ecs::World &world) override;
 };
 
-}  // namespace systems
+} // namespace systems
 
-#endif  // SYSTEMS_HPP_
+#endif // SYSTEMS_HPP_

@@ -11,14 +11,18 @@ namespace impl {
 using ComponentID = std::size_t;
 const ComponentID NULL_COMPONENT = 0;
 
-class IComponentStorage {};
+class IComponentStorage {
+  public:
+    virtual ~IComponentStorage() {}
+};
 
 template <typename T>
 class ComponentStorage : public IComponentStorage {
   public:
     template <typename... Args>
     ComponentID emplace(Args &&...args) {
-        // TODO
+        components.push_back(std::optional<T>(std::forward<Args>(args)...));
+        return components.size() - 1;
     }
 
     T &operator[](ComponentID id) {
@@ -26,8 +30,12 @@ class ComponentStorage : public IComponentStorage {
         // TODO: safety
     }
 
+    // TODO:
+    // replace()
+    // custom iterators
+
   private:
-    std::deque<tiny::optional<T>> components;
+    std::deque<std::optional<T>> components;
 };
 
 } // namespace impl
