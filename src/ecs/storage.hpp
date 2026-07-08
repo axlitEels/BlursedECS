@@ -24,16 +24,24 @@ class ComponentStorage : public IComponentStorage {
         using difference_type = std::ptrdiff_t;
         using value_type = T;
 
-        value_type& operator*() const;
+        value_type& operator*() const { return *iter; }
 
-        Iterator& operator++();
+        Iterator& operator++() {
+            do {
+                ++iter;
+            } while (iter != end && !iter->has_value());
+            return *this;
+        }
+
         Iterator operator++(int) {
             auto tmp = *this;
             ++*this;
             return tmp;
         }
 
-        bool operator==(const Iterator&) const;
+        bool operator==(const Iterator& other) const {
+            return iter == other.iter && end == other.end;
+        }
 
       private:
         std::deque<std::optional<T>>::iterator iter;
