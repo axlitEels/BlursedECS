@@ -78,6 +78,25 @@ class System; // Declaring early so that World can store them
 
 class World {
   public:
+    class iterator {
+      public:
+        using difference_type = std::ptrdiff_t;
+        using value_type = impl::EntityDescriptor;
+        using deque_iter = std::deque<value_type>::iterator;
+
+        iterator() = default;
+        iterator(deque_iter iter, deque_iter end) : iter(iter), end(end) {}
+
+        value_type& operator*() const { return *iter; }
+        iterator& operator++();
+        iterator operator++(int);
+        bool operator==(const iterator& other) const;
+
+      private:
+        deque_iter iter, end;
+    };
+    static_assert(std::forward_iterator<iterator>);
+
     template <typename T, typename... Ts>
     void register_components() {
         if (component_registry.register_component<T>())
@@ -116,7 +135,8 @@ class World {
 
     bool destroy(Entity e) {
         impl::EntityDescriptor desc = entities[e];
-        if (!desc.size()) return false;
+        if (!desc.size())
+            return false;
 
         impl::ComponentTypeID n = desc.size();
         for (impl::ComponentTypeID i = 0; i < n; ++i) {
@@ -134,6 +154,9 @@ class World {
     void add_system(Args&&... args) {
         systems.push_back(std::make_unique<T>(std::forward<Args>(args)...));
     }
+
+    iterator begin();
+    iterator end();
 
     template <typename T, class F>
     void for_each(F func) {

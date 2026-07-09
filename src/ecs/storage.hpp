@@ -28,8 +28,12 @@ class ComponentStorage : public IComponentStorage {
       public:
         using difference_type = std::ptrdiff_t;
         using value_type = T;
+        using deque_iter = std::deque<std::optional<value_type>>::iterator;
 
-        value_type& operator*() const { return *iter; }
+        iterator() = default;
+        iterator(deque_iter iter, deque_iter end) : iter(iter), end(end) {}
+
+        value_type& operator*() const { return **iter; }
 
         iterator& operator++() {
             do {
@@ -49,10 +53,8 @@ class ComponentStorage : public IComponentStorage {
         }
 
       private:
-        std::deque<std::optional<T>>::iterator iter;
-        std::deque<std::optional<T>>::iterator end;
+        deque_iter iter, end;
     };
-
     static_assert(std::forward_iterator<iterator>);
 
     template <typename... Args>
@@ -83,13 +85,12 @@ class ComponentStorage : public IComponentStorage {
         // TODO: safety
     }
 
-    iterator begin() const {
-        return iterator{components.begin(), components.end()};
+    iterator begin() {
+        // Incrementing to skip NULL_COMPONENT
+        return iterator(components.begin() + 1, components.end());
     }
 
-    iterator end() const {
-        return iterator{components.end(), components.end()};
-    }
+    iterator end() { return iterator(components.end(), components.end()); }
 
   private:
     // Reserve for NULL_COMPONENT

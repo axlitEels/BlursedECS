@@ -37,6 +37,23 @@ void EntityDescriptor::resize(ComponentTypeID n) {
 
 } // namespace impl
 
+World::iterator& World::iterator::operator++() {
+    do {
+        ++iter;
+    } while (iter != end && !iter->size());
+    return *this;
+}
+
+World::iterator World::iterator::operator++(int) {
+    auto tmp = *this;
+    ++*this;
+    return tmp;
+}
+
+bool World::iterator::operator==(const iterator& other) const {
+    return iter == other.iter && end == other.end;
+}
+
 Entity World::spawn() {
     Entity e;
     // Pass this to avoid reallocations later
@@ -55,8 +72,16 @@ Entity World::spawn() {
     return e;
 }
 
+World::iterator World::begin() {
+    return World::iterator(entities.begin(), entities.end());
+}
+
+World::iterator World::end() {
+    return World::iterator(entities.end(), entities.end());
+}
+
 void World::update() {
-    for (auto &system : systems)
+    for (auto& system : systems)
         system->run(*this);
 }
 
