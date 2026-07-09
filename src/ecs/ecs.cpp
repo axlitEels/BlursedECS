@@ -37,9 +37,17 @@ void EntityDescriptor::resize(ComponentTypeID n) {
 
 } // namespace impl
 
+World::iterator::iterator(World::iterator::deque_iter iter,
+                          World::iterator::deque_iter end, std::size_t cur)
+    : iter(iter), end(end), cur(cur) {
+    if (iter != end && !iter->size()) // Skip first vacant entities, if any
+        ++(*this);
+}
+
 World::iterator& World::iterator::operator++() {
     do {
         ++iter;
+        ++cur;
     } while (iter != end && !iter->size());
     return *this;
 }
@@ -73,11 +81,11 @@ Entity World::spawn() {
 }
 
 World::iterator World::begin() {
-    return World::iterator(entities.begin(), entities.end());
+    return World::iterator(entities.begin(), entities.end(), 0);
 }
 
 World::iterator World::end() {
-    return World::iterator(entities.end(), entities.end());
+    return World::iterator(entities.end(), entities.end(), entities.size());
 }
 
 void World::update() {

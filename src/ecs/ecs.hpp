@@ -78,22 +78,24 @@ class System; // Declaring early so that World can store them
 
 class World {
   public:
+    // An iterator that stops on valid entities, granting access to their IDs
     class iterator {
       public:
         using difference_type = std::ptrdiff_t;
-        using value_type = impl::EntityDescriptor;
-        using deque_iter = std::deque<value_type>::iterator;
+        using value_type = ecs::Entity;
+        using deque_iter = std::deque<impl::EntityDescriptor>::iterator;
 
         iterator() = default;
-        iterator(deque_iter iter, deque_iter end) : iter(iter), end(end) {}
+        iterator(deque_iter iter, deque_iter end, std::size_t cur);
 
-        value_type& operator*() const { return *iter; }
+        value_type operator*() const { return cur; }
         iterator& operator++();
         iterator operator++(int);
         bool operator==(const iterator& other) const;
 
       private:
         deque_iter iter, end;
+        std::size_t cur;
     };
     static_assert(std::forward_iterator<iterator>);
 
@@ -120,9 +122,7 @@ class World {
     }
 
     // TODO:
-    // iterator
     // get()
-    // iterators()
 
     Entity spawn();
 
