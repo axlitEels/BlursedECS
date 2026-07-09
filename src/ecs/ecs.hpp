@@ -1,5 +1,5 @@
-#ifndef BLURSEDECS_HPP_
-#define BLURSEDECS_HPP_
+#ifndef BLURSEDECS_ECS_HPP_
+#define BLURSEDECS_ECS_HPP_
 
 #include "storage.hpp"
 
@@ -120,7 +120,7 @@ class World {
 
         return *storage[desc[type]];
     }
-    
+
     template <typename T>
     std::optional<T>& get(Entity e) {
         impl::ComponentTypeID type = component_registry.get_type_id<T>();
@@ -199,4 +199,4 @@ class System {
 
 } // namespace ecs
 
-#endif // BLURSEDECS_HPP_
+#endif // BLURSEDECS_ECS_HPP_
