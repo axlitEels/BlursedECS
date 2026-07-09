@@ -108,21 +108,26 @@ class World {
     }
 
     template <typename T, typename... Args>
-    T& emplace_or_get(Entity entity, Args&&... args) {
+    T& emplace_or_get(Entity e, Args&&... args) {
         impl::ComponentTypeID type = component_registry.get_type_id<T>();
         impl::ComponentStorage<T>& storage = get_storage<T>();
-        impl::EntityDescriptor& descriptor = entities[entity];
+        impl::EntityDescriptor& desc = entities[e];
 
-        if (descriptor[type] == impl::NULL_COMPONENT) {
+        if (desc[type] == impl::NULL_COMPONENT) {
             impl::ComponentID id = storage.emplace(std::forward<Args>(args)...);
-            descriptor.add_component(type, id);
+            desc.add_component(type, id);
         }
 
-        return storage[descriptor[type]];
+        return *storage[desc[type]];
     }
-
-    // TODO:
-    // get()
+    
+    template <typename T>
+    std::optional<T>& get(Entity e) {
+        impl::ComponentTypeID type = component_registry.get_type_id<T>();
+        impl::EntityDescriptor desc = entities[e];
+        impl::ComponentStorage<T>& storage = get_storage<T>();
+        return storage[desc[type]];
+    }
 
     Entity spawn();
 

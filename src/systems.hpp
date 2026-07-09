@@ -20,6 +20,9 @@ class MovementSystem : public ecs::System {
 class DrawingSystem : public ecs::System {
   public:
     virtual void run(ecs::World &world) override;
+
+  private:
+    int turn = 1;
 };
 
 } // namespace systems

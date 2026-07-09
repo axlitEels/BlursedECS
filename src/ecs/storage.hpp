@@ -80,9 +80,8 @@ class ComponentStorage : public IComponentStorage {
         return true;
     }
 
-    T& operator[](ComponentID id) {
-        return *components[id];
-        // TODO: safety
+    std::optional<T>& operator[](ComponentID id) {
+        return components[id];
     }
 
     iterator begin() {
