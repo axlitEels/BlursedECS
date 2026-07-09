@@ -14,9 +14,9 @@ struct TransformComponent {
     Vec3 scale{1, 1, 1};
 };
 
-struct HealthComponent {
-    const int BASE_HEALTH = 100;
+const int BASE_HEALTH = 100;
 
+struct HealthComponent {
     int health = BASE_HEALTH;
     int max_health = BASE_HEALTH;
 

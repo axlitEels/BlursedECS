@@ -29,7 +29,7 @@ class EntityDescriptor {
     bool add_component(ComponentTypeID type, ComponentID id);
     bool remove_component(ComponentTypeID type);
 
-    bool is_valid() const { return components.size(); }
+    ComponentTypeID size() const { return components.size(); }
     void clear() { components.clear(); }
     void resize(ComponentTypeID n);
 
@@ -102,11 +102,32 @@ class World {
 
     // TODO:
     // get()
-    // replace()
-    // remove()
     // iterators()
 
     Entity spawn();
+
+    template <typename T>
+    bool remove(Entity e) {
+        impl::ComponentTypeID type = component_registry.get_type_id<T>();
+        impl::EntityDescriptor desc = entities[e];
+        return storages[type]->remove(desc[type]);
+    }
+
+    bool destroy(Entity e) {
+        impl::EntityDescriptor desc = entities[e];
+        if (!desc.size()) return false;
+
+        impl::ComponentTypeID n = desc.size();
+        for (impl::ComponentTypeID i = 0; i < n; ++i) {
+            if (desc[i]) {
+                storages[i]->remove(desc[i]);
+            }
+        }
+
+        entities[e].clear();
+        vacant_entities.push(e);
+        return true;
+    }
 
     template <typename T, typename... Args>
     void add_system(Args&&... args) {

@@ -39,6 +39,7 @@ void EntityDescriptor::resize(ComponentTypeID n) {
 
 Entity World::spawn() {
     Entity e;
+    // Pass this to avoid reallocations later
     impl::ComponentTypeID type_count = component_registry.get_type_count();
 
     if (vacant_entities.empty()) {

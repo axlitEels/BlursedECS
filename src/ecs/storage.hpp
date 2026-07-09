@@ -2,7 +2,8 @@
 #define ECS_STORAGE_HPP_
 
 #include <deque>
-#include <tiny/optional.h>
+#include <optional>
+#include <queue>
 
 namespace ecs {
 
@@ -13,6 +14,8 @@ const ComponentID NULL_COMPONENT = 0;
 
 class IComponentStorage {
   public:
+    virtual bool remove(ComponentID id) = 0;
+
     virtual ~IComponentStorage() {}
 };
 
@@ -54,17 +57,31 @@ class ComponentStorage : public IComponentStorage {
 
     template <typename... Args>
     ComponentID emplace(Args&&... args) {
-        components.push_back(std::forward<Args>(args)...);
-        return components.size() - 1;
+        if (vacant.empty()) {
+            components.push_back(std::forward<Args>(args)...);
+            return components.size() - 1;
+        } else {
+            ComponentID id = vacant.front();
+            vacant.pop();
+            auto iter = components.cbegin() + id;
+            components.emplace(iter, std::forward<Args>(args)...);
+            return id;
+        }
+    }
+
+    virtual bool remove(ComponentID id) override {
+        if (id > components.size() || components[id] == std::nullopt)
+            return false;
+
+        components[id] = std::nullopt;
+        vacant.push(id);
+        return true;
     }
 
     T& operator[](ComponentID id) {
         return *components[id];
         // TODO: safety
     }
-
-    // TODO:
-    // replace()
 
     iterator begin() const {
         return iterator{components.begin(), components.end()};
@@ -75,7 +92,9 @@ class ComponentStorage : public IComponentStorage {
     }
 
   private:
-    std::deque<std::optional<T>> components;
+    // Reserve for NULL_COMPONENT
+    std::deque<std::optional<T>> components = std::deque<std::optional<T>>(1);
+    std::queue<ComponentID> vacant;
 };
 
 } // namespace impl
