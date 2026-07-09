@@ -1,5 +1,5 @@
-#ifndef ECS_STORAGE_HPP_
-#define ECS_STORAGE_HPP_
+#ifndef BLURSEDECS_STORAGE_HPP_
+#define BLURSEDECS_STORAGE_HPP_
 
 #include <deque>
 #include <optional>
@@ -101,4 +101,4 @@ class ComponentStorage : public IComponentStorage {
 
 } // namespace ecs
 
-#endif // ECS_STORAGE_HPP_
+#endif // BLURSEDECS_STORAGE_HPP_

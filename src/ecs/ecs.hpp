@@ -1,5 +1,5 @@
-#ifndef ECS_HPP_
-#define ECS_HPP_
+#ifndef BLURSEDECS_HPP_
+#define BLURSEDECS_HPP_
 
 #include "storage.hpp"
 
@@ -101,6 +101,7 @@ class World {
     }
 
     // TODO:
+    // iterator
     // get()
     // iterators()
 
@@ -170,4 +171,4 @@ class System {
 
 } // namespace ecs
 
-#endif // ECS_HPP_
+#endif // BLURSEDECS_HPP_
