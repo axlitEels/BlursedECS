@@ -89,10 +89,8 @@ class World {
     template <typename T, typename... Args>
     T& emplace_or_get(Entity entity, Args&&... args) {
         impl::ComponentTypeID type = component_registry.get_type_id<T>();
-
-        auto& descriptor = entities[entity];
-        auto& istorage = *storages[type];
-        auto& storage = dynamic_cast<impl::ComponentStorage<T>&>(istorage);
+        impl::ComponentStorage<T>& storage = get_storage<T>();
+        impl::EntityDescriptor& descriptor = entities[entity];
 
         if (descriptor[type] == impl::NULL_COMPONENT) {
             impl::ComponentID id = storage.emplace(std::forward<Args>(args)...);
@@ -115,9 +113,22 @@ class World {
         systems.push_back(std::make_unique<T>(std::forward<Args>(args)...));
     }
 
+    template <typename T, class F>
+    void for_each(F func) {
+        impl::ComponentStorage<T>& storage = get_storage<T>();
+        for (auto i = storage.begin(), end = storage.end(); i != end; ++i)
+            func(*i);
+    }
+
     void update();
 
   private:
+    template <typename T>
+    impl::ComponentStorage<T>& get_storage() const {
+        impl::ComponentTypeID type = component_registry.get_type_id<T>();
+        return dynamic_cast<impl::ComponentStorage<T>&>(*storages[type]);
+    }
+
     impl::ComponentRegistry component_registry;
     std::vector<std::unique_ptr<impl::IComponentStorage>> storages;
 

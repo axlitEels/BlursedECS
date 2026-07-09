@@ -19,27 +19,29 @@ class IComponentStorage {
 template <typename T>
 class ComponentStorage : public IComponentStorage {
   public:
-    class Iterator {
+    // A (hopefully proper) forward iterator
+    // Name is lowercase in case the thing implements Container one day.
+    class iterator {
       public:
         using difference_type = std::ptrdiff_t;
         using value_type = T;
 
         value_type& operator*() const { return *iter; }
 
-        Iterator& operator++() {
+        iterator& operator++() {
             do {
                 ++iter;
             } while (iter != end && !iter->has_value());
             return *this;
         }
 
-        Iterator operator++(int) {
+        iterator operator++(int) {
             auto tmp = *this;
             ++*this;
             return tmp;
         }
 
-        bool operator==(const Iterator& other) const {
+        bool operator==(const iterator& other) const {
             return iter == other.iter && end == other.end;
         }
 
@@ -48,7 +50,7 @@ class ComponentStorage : public IComponentStorage {
         std::deque<std::optional<T>>::iterator end;
     };
 
-    static_assert(std::forward_iterator<Iterator>);
+    static_assert(std::forward_iterator<iterator>);
 
     template <typename... Args>
     ComponentID emplace(Args&&... args) {
@@ -63,7 +65,14 @@ class ComponentStorage : public IComponentStorage {
 
     // TODO:
     // replace()
-    // custom iterators
+
+    iterator begin() const {
+        return iterator{components.begin(), components.end()};
+    }
+
+    iterator end() const {
+        return iterator{components.end(), components.end()};
+    }
 
   private:
     std::deque<std::optional<T>> components;
