@@ -1,10 +1,11 @@
 #include "components.hpp"
 #include "ecs/ecs.hpp"
+#include "ecs/lua.hpp"
 #include "systems.hpp"
 
 using namespace cmps;
 
-int main() {
+ecs::World init_world() {
     ecs::World world;
 
     world.register_components<TransformComponent, HealthComponent>();
@@ -20,12 +21,64 @@ int main() {
     ecs::Entity brick = world.spawn();
     world.emplace_or_get<TransformComponent>(brick, Vec3{-2, -2, -2});
 
+    return world;
+}
+
+void demo() {
+    ecs::World world = init_world();
+
     world.add_system<systems::MovementSystem>(Vec3{-5, 0, 3});
     world.add_system<systems::DrawingSystem>();
 
     for (int i = 0; i < 3; i++) {
         world.update();
     }
+}
+ecs::lua::LuaSystem configure_lua(ecs::World& world) {
+    ecs::lua::LuaSystem lua;
+
+    // Only register types & components we want to have accessible in Lua
+    lua.expose_type<Vec3>("Vec3", "x", &Vec3::x, "y", &Vec3::y, "z", &Vec3::z);
+    lua.expose_type<TransformComponent>(
+        "Transform", "position", &TransformComponent::position, "rotation",
+        &TransformComponent::rotation, "scale", &TransformComponent::scale);
+
+    // World getter (using raw pointer to get nil semantics in Lua)
+    lua.expose_function(
+        "get_transform",
+        [](ecs::World& world, ecs::Entity e) -> TransformComponent* {
+            auto& opt = world.get<TransformComponent>(e);
+            if (opt.has_value()) {
+                return &opt.value();
+            }
+            return nullptr; // = nil
+        });
+
+    // Import the Lua code
+    assert(lua.load_lua_file("scripts/example.lua", world));
+    assert(lua.add_lua_system("sys_spin"));
+
+    return lua;
+}
+
+void lua_demo() {
+    ecs::World world = init_world();
+
+    world.add_system<systems::DrawingSystem>();
+
+    world.add_system<ecs::lua::LuaSystem>(configure_lua(world));
+
+    for (int i = 0; i < 5; i++) {
+        world.update();
+    }
+}
+
+int main() {
+    std::cout << "  ### ECS DEMO ###" << std::endl;
+    demo();
+
+    std::cout << "\n  ### LUA DEMO ###" << std::endl;
+    lua_demo();
 
     return 0;
 }

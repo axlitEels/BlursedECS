@@ -14,7 +14,7 @@ const std::string BAR = "########################################";
 
 void DrawingSystem::run(ecs::World& world) {
     std::cout << '\n' << BAR << '\n';
-    std::cout << "  TURN #" << turn << '\n';
+    std::cout << "    TURN #" << turn << '\n';
     std::cout << BAR << '\n';
 
     for (auto i = world.begin(), end = world.end(); i != end; ++i) {

@@ -3,9 +3,8 @@
 
 #include "ecs.hpp"
 
-// #define SOL_ALL_SAFETIES_ON 1
+#define SOL_ALL_SAFETIES_ON 1
 
-#include <functional>
 #include <sol/sol.hpp>
 #include <vector>
 
@@ -14,12 +13,19 @@ namespace ecs::lua {
 
 class LuaSystem : public ecs::System {
   public:
+    LuaSystem();
+
     virtual void run(ecs::World& world) override;
 
-    template <class R, class... Args>
-    void add_function(std::string name, std::function<R(Args...)> func) {
-        lua[name] = func;
+    template <typename F>
+    void expose_function(std::string name, F func) {
+        lua.set_function(name, std::forward<F>(func));
     }
+
+    template <typename Class, typename... Args>
+		sol::usertype<Class> expose_type(Args&&... args) {
+			return lua.new_usertype<Class>(std::forward<Args>(args)...);
+		}
 
     bool load_lua(std::string code, ecs::World& world);
     bool load_lua_file(std::string path, ecs::World& world);
