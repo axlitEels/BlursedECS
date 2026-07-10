@@ -65,8 +65,19 @@ class ComponentStorage : public IComponentStorage {
         } else {
             ComponentID id = vacant.front();
             vacant.pop();
-            auto iter = components.cbegin() + id;
-            components.emplace(iter, std::forward<Args>(args)...);
+            components[id]= T(std::forward<Args>(args)...);
+            return id;
+        }
+    }
+
+    ComponentID put(T&& component) {
+        if (vacant.empty()) {
+            components.push_back(std::forward<T>(component));
+            return components.size() - 1;
+        } else {
+            ComponentID id = vacant.front();
+            vacant.pop();
+            components[id] = component;
             return id;
         }
     }

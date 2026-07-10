@@ -3,6 +3,7 @@
 
 #include "storage.hpp"
 
+#include <cassert>
 #include <deque>
 #include <memory>
 #include <optional>
@@ -14,7 +15,10 @@
 namespace ecs {
 
 using Entity = std::size_t;
-// const Entity NULL_ENTITY = 0;
+
+#ifdef ECS_INCLUDE_NULL_ENTITY
+const Entity NULL_ENTITY = 0;
+#endif
 
 namespace impl {
 
@@ -103,22 +107,11 @@ class World {
     iterator begin();
     iterator end();
 
-    bool destroy(Entity e) {
-        impl::EntityDescriptor desc = entities[e];
-        if (!desc.size())
-            return false;
+    bool valid(Entity e) const { return entities[e].size(); }
 
-        impl::ComponentTypeID n = desc.size();
-        for (impl::ComponentTypeID i = 0; i < n; ++i) {
-            if (desc[i]) {
-                storages[i]->remove(desc[i]);
-            }
-        }
+    Entity size() const { return entities.size(); }
 
-        entities[e].clear();
-        vacant_entities.push(e);
-        return true;
-    }
+    bool destroy(Entity e);
 
     // COMPONENT METHODS
 
@@ -138,8 +131,24 @@ class World {
 
         if (desc[type] == impl::NULL_COMPONENT) {
             impl::ComponentID id = storage.emplace(std::forward<Args>(args)...);
-            desc.add_component(type, id);
+            assert(desc.add_component(type, id));
         }
+
+        return *storage[desc[type]];
+    }
+
+    template <typename T>
+    T& put_or_replace(Entity e, T&& component) {
+        impl::ComponentTypeID type = component_registry.get_type_id<T>();
+        impl::ComponentStorage<T>& storage = get_storage<T>();
+        impl::EntityDescriptor& desc = entities[e];
+
+        if (desc[type] != impl::NULL_COMPONENT) {
+            remove<T>(e);
+        }
+
+        impl::ComponentID id = storage.put(std::forward<T>(component));
+        assert(desc.add_component(type, id));
 
         return *storage[desc[type]];
     }
@@ -148,18 +157,17 @@ class World {
     bool contains(Entity e) {
         impl::ComponentTypeID type = component_registry.get_type_id<T>();
         impl::EntityDescriptor desc = entities[e];
-        
+
         return desc[type] != impl::NULL_COMPONENT;
     }
-    
+
+    // There is no safe way for preventing the user from writing into nullopt
+    // Therefore the user should always check if nullopt was returned
+    //                       and only ever modify the contained value
     template <typename T>
     std::optional<T>& get(Entity e) {
         impl::ComponentTypeID type = component_registry.get_type_id<T>();
         impl::EntityDescriptor desc = entities[e];
-
-        if (desc[type] == impl::NULL_COMPONENT)
-            return std::nullopt;
-
         impl::ComponentStorage<T>& storage = get_storage<T>();
         return storage[desc[type]];
     }
@@ -175,7 +183,8 @@ class World {
     bool remove(Entity e) {
         impl::ComponentTypeID type = component_registry.get_type_id<T>();
         impl::EntityDescriptor desc = entities[e];
-        return storages[type]->remove(desc[type]);
+        assert(storages[type]->remove(desc[type]));
+        return desc.remove_component(type);
     }
 
     // SYSTEM METHODS
@@ -194,13 +203,18 @@ class World {
         return dynamic_cast<impl::ComponentStorage<T>&>(*storages[type]);
     }
 
+#ifndef ECS_INCLUDE_NULL_ENTITY
+    std::deque<impl::EntityDescriptor> entities;
+#else
+    // Reserve for NULL_ENTITY
+    std::deque<impl::EntityDescriptor> entities =
+        std::deque<impl::EntityDescriptor>(1);
+#endif
+
+    std::queue<Entity> vacant_entities;
+
     impl::ComponentRegistry component_registry;
     std::vector<std::unique_ptr<impl::IComponentStorage>> storages;
-
-    std::deque<impl::EntityDescriptor> entities;
-    // Reserve for NULL_ENTITY
-    // = std::deque<impl::EntityDescriptor>(1);
-    std::queue<Entity> vacant_entities;
 
     std::vector<std::unique_ptr<System>> systems;
 };

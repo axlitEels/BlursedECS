@@ -88,6 +88,23 @@ World::iterator World::end() {
     return World::iterator(entities.end(), entities.end(), entities.size());
 }
 
+bool World::destroy(Entity e) {
+    impl::EntityDescriptor desc = entities[e];
+    if (!desc.size())
+        return false;
+
+    impl::ComponentTypeID n = desc.size();
+    for (impl::ComponentTypeID i = 0; i < n; ++i) {
+        if (desc[i]) {
+            storages[i]->remove(desc[i]);
+        }
+    }
+
+    entities[e].clear();
+    vacant_entities.push(e);
+    return true;
+}
+
 void World::update() {
     for (auto& system : systems)
         system->run(*this);
