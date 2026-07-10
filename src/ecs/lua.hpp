@@ -15,22 +15,22 @@ class LuaSystem : public ecs::System {
   public:
     LuaSystem();
 
-    virtual void run(ecs::World& world) override;
+    template <typename T, typename... Args>
+		sol::usertype<T> expose_type(Args&&... args) {
+			return lua.new_usertype<T>(std::forward<Args>(args)...);
+		}
 
-    template <typename F>
+    template <class F>
     void expose_function(std::string name, F func) {
         lua.set_function(name, std::forward<F>(func));
     }
-
-    template <typename Class, typename... Args>
-		sol::usertype<Class> expose_type(Args&&... args) {
-			return lua.new_usertype<Class>(std::forward<Args>(args)...);
-		}
 
     bool load_lua(std::string code, ecs::World& world);
     bool load_lua_file(std::string path, ecs::World& world);
 
     bool add_lua_system(std::string name);
+
+    virtual void run(ecs::World& world) override;
 
   private:
     sol::state lua;

@@ -5,6 +5,7 @@
 
 #include <deque>
 #include <memory>
+#include <optional>
 #include <queue>
 #include <typeindex>
 #include <unordered_map>
@@ -30,8 +31,8 @@ class EntityDescriptor {
     bool remove_component(ComponentTypeID type);
 
     ComponentTypeID size() const { return components.size(); }
-    void clear() { components.clear(); }
     void resize(ComponentTypeID n);
+    void clear() { components.clear(); }
 
   private:
     std::vector<ComponentID> components;
@@ -50,17 +51,13 @@ class ComponentRegistry {
         return true;
     }
 
-    ComponentTypeID get_type_id(std::type_index index) const {
-        return registered_components.at(index);
-    }
-
     template <typename T>
     ComponentTypeID get_type_id() const {
         return registered_components.at(std::type_index(typeid(T)));
     }
 
     template <typename T>
-    ComponentTypeID get_type_id(T comp) const {
+    ComponentTypeID get_type_id(T& comp) const {
         get_type_id<T>();
     }
 
@@ -99,6 +96,32 @@ class World {
     };
     static_assert(std::forward_iterator<iterator>);
 
+    // ENTITY METHODS
+
+    Entity spawn();
+
+    iterator begin();
+    iterator end();
+
+    bool destroy(Entity e) {
+        impl::EntityDescriptor desc = entities[e];
+        if (!desc.size())
+            return false;
+
+        impl::ComponentTypeID n = desc.size();
+        for (impl::ComponentTypeID i = 0; i < n; ++i) {
+            if (desc[i]) {
+                storages[i]->remove(desc[i]);
+            }
+        }
+
+        entities[e].clear();
+        vacant_entities.push(e);
+        return true;
+    }
+
+    // COMPONENT METHODS
+
     template <typename T, typename... Ts>
     void register_components() {
         if (component_registry.register_component<T>())
@@ -122,14 +145,31 @@ class World {
     }
 
     template <typename T>
+    bool contains(Entity e) {
+        impl::ComponentTypeID type = component_registry.get_type_id<T>();
+        impl::EntityDescriptor desc = entities[e];
+        
+        return desc[type] != impl::NULL_COMPONENT;
+    }
+    
+    template <typename T>
     std::optional<T>& get(Entity e) {
         impl::ComponentTypeID type = component_registry.get_type_id<T>();
         impl::EntityDescriptor desc = entities[e];
+
+        if (desc[type] == impl::NULL_COMPONENT)
+            return std::nullopt;
+
         impl::ComponentStorage<T>& storage = get_storage<T>();
         return storage[desc[type]];
     }
 
-    Entity spawn();
+    template <typename T, class F>
+    void for_each(F func) {
+        impl::ComponentStorage<T>& storage = get_storage<T>();
+        for (auto i = storage.begin(), end = storage.end(); i != end; ++i)
+            func(*i);
+    }
 
     template <typename T>
     bool remove(Entity e) {
@@ -138,36 +178,11 @@ class World {
         return storages[type]->remove(desc[type]);
     }
 
-    bool destroy(Entity e) {
-        impl::EntityDescriptor desc = entities[e];
-        if (!desc.size())
-            return false;
-
-        impl::ComponentTypeID n = desc.size();
-        for (impl::ComponentTypeID i = 0; i < n; ++i) {
-            if (desc[i]) {
-                storages[i]->remove(desc[i]);
-            }
-        }
-
-        entities[e].clear();
-        vacant_entities.push(e);
-        return true;
-    }
+    // SYSTEM METHODS
 
     template <typename T, typename... Args>
     void add_system(Args&&... args) {
         systems.push_back(std::make_unique<T>(std::forward<Args>(args)...));
-    }
-
-    iterator begin();
-    iterator end();
-
-    template <typename T, class F>
-    void for_each(F func) {
-        impl::ComponentStorage<T>& storage = get_storage<T>();
-        for (auto i = storage.begin(), end = storage.end(); i != end; ++i)
-            func(*i);
     }
 
     void update();

@@ -35,19 +35,6 @@ LuaSystem::LuaSystem() {
 #endif
 }
 
-void LuaSystem::run(ecs::World& world) {
-    lua["world"] = std::ref(world);
-    for (auto& system : systems) {
-        sol::protected_function func = lua[system];
-        auto result = func();
-        if (!result.valid()) {
-            sol::error err = result;
-            std::cerr << "Lua error in system '" << system
-                      << "': " << err.what() << std::endl;
-        }
-    }
-}
-
 bool LuaSystem::load_lua(std::string code, ecs::World& world) {
     sol::load_result script = lua.load(code);
     if (!script.valid())
@@ -74,6 +61,19 @@ bool LuaSystem::add_lua_system(std::string name) {
 
     systems.push_back(std::move(name));
     return true;
+}
+
+void LuaSystem::run(ecs::World& world) {
+    lua["world"] = std::ref(world);
+    for (auto& system : systems) {
+        sol::protected_function func = lua[system];
+        auto result = func();
+        if (!result.valid()) {
+            sol::error err = result;
+            std::cerr << "Lua error in system '" << system
+                      << "': " << err.what() << std::endl;
+        }
+    }
 }
 
 } // namespace ecs::lua
