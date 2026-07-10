@@ -60,11 +60,6 @@ class ComponentRegistry {
         return registered_components.at(std::type_index(typeid(T)));
     }
 
-    template <typename T>
-    ComponentTypeID get_type_id(T& comp) const {
-        get_type_id<T>();
-    }
-
     ComponentTypeID get_type_count() const {
         return registered_components.size();
     }
@@ -154,7 +149,7 @@ class World {
     }
 
     template <typename T>
-    bool contains(Entity e) {
+    bool contains(Entity e) const {
         impl::ComponentTypeID type = component_registry.get_type_id<T>();
         impl::EntityDescriptor desc = entities[e];
 

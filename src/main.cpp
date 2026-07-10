@@ -15,11 +15,14 @@ ecs::World init_world() {
     world.emplace_or_get<HealthComponent>(player, 10);
 
     ecs::Entity enemy = world.spawn();
-    world.emplace_or_get<TransformComponent>(enemy, Vec3{1, 2, 5});
-    world.emplace_or_get<HealthComponent>(enemy, 30);
+    world.put_or_replace(enemy, TransformComponent(Vec3{1, 2, 5}));
+    world.put_or_replace(enemy, HealthComponent(30));
 
     ecs::Entity brick = world.spawn();
-    world.emplace_or_get<TransformComponent>(brick, Vec3{-2, -2, -2});
+    TransformComponent brick_transform(Vec3{-2, -2, -2});
+    // This move is unnecessary, as brick_transform does not use on heap
+    // But this is how one would do it if it did require moves
+    world.put_or_replace(brick, std::move(brick_transform));
 
     return world;
 }
@@ -27,6 +30,8 @@ ecs::World init_world() {
 void demo() {
     ecs::World world = init_world();
 
+    // Systems will be executed in the order they're added
+    // Conditional/simultaneous execution is not implemented
     world.add_system<systems::MovementSystem>(Vec3{-5, 0, 3});
     world.add_system<systems::DrawingSystem>();
 
