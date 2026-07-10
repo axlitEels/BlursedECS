@@ -183,8 +183,11 @@ class World {
     bool remove(Entity e) {
         impl::ComponentTypeID type = component_registry.get_type_id<T>();
         impl::EntityDescriptor desc = entities[e];
-        assert(storages[type]->remove(desc[type]));
-        return desc.remove_component(type);
+        if (desc.remove_component(type)) {
+            assert(storages[type]->remove(desc[type]));
+            return true;
+        }
+        return false;
     }
 
     // SYSTEM METHODS
