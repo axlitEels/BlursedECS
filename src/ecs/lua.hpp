@@ -21,15 +21,14 @@ class LuaSystem : public ecs::System {
         lua[name] = func;
     }
 
-    bool run_lua(std::string code, ecs::World& world);
-    bool add_lua_system(std::string code);
+    bool load_lua(std::string code, ecs::World& world);
+    bool load_lua_file(std::string path, ecs::World& world);
 
-    bool run_lua_file(std::string path, ecs::World& world);
-    bool add_lua_system_file(std::string path);
+    bool add_lua_system(std::string name);
 
   private:
     sol::state lua;
-    std::vector<sol::load_result> scripts;
+    std::vector<std::string> systems;
 };
 
 } // namespace ecs::lua
